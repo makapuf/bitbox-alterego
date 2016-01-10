@@ -1,0 +1,12 @@
+build/
+misc/
+alterego
+maps.h
+maps_objects.c
+
+*_test
+*.bin
+*.elf
+*.spr
+*.tmap
+*.tset
