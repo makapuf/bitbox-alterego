@@ -125,7 +125,7 @@ void game_init(void)
 // will reset if pass a new map pointer, to continue just pass zero
 // will return zero when finished
 
-#define FADE_FRAMES 90 // nb frames to fade (speed)
+#define FADE_FRAMES 180 // nb frames to fade (speed)
 static int fade_pos=0;
 static const uint8_t *fade_map;
 void start_fade(const uint8_t *new_map)
@@ -228,6 +228,9 @@ void start_level(int new_level)
 					player->fr = frame_player_idle;
 					*/
 					break;
+				case maps_gum_start :
+					vram[i][j]=maps_gum; // why ;
+					break;
 
 /*
 				case maps_skull_right :
@@ -269,6 +272,34 @@ void enter_play()
 	start_level(0);
 }
 
+
+void animate_tiles()
+{
+	// scan tiles and animate them.
+	for (int i=6;i<25;i++) // 1/4 screen ?
+		for (int j=2;j<29;j++)
+		{
+			uint8_t c=vram[i][j];
+			// gums
+			if (c>=maps_gum && c<maps_gum+7) {
+				vram[i][j]+=1;
+			} else if (c==maps_gum+7) {
+				vram[i][j] = maps_gum;
+			// alter gums
+			} else if (c>=maps_alter_gum && c<maps_alter_gum+7) {
+				vram[i][j]+=1;
+			} else if (c==maps_alter_gum+7) {
+				vram[i][j]= maps_alter_gum;
+			}
+
+			// water
+			// stars
+
+
+
+		}
+}
+
 void game_frame(void)
 {
 	kbd_emulate_gamepad();
@@ -283,6 +314,8 @@ void game_frame(void)
 			break;
 
 		case state_play :
+			if (vga_frame % 8 == 0)
+				animate_tiles();
 			break;
 	}
 }
