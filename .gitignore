@@ -3,7 +3,7 @@ misc/
 alterego
 maps.h
 maps_data.c
-
+*_emu
 *_test
 *.bin
 *.elf
