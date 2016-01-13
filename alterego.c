@@ -9,22 +9,52 @@
 
 #include <string.h>
 
+// #define SKIP_INTRO
+
 #define SCREEN_X 32
 #define SCREEN_Y 30
 #define MAX_MONSTER 8 // max nb per screen
 #define START_LIVES 5
 
-enum GameState { state_credits, state_title, state_prestart, state_play, state_pause, state_level_ended };
-enum TileType { tile_fall=0, tile_block, tile_die, tile_stair};
+enum GameState {
+	state_zero,
+	state_credits,
+	state_title,
+	state_prestart,
+	state_play,
+	state_pause,
+	state_level_ended
+};
 
-enum frames_player { frame_player_idle, frame_player_left1, frame_player_left2, frame_player_jump }; // auto from sprite ?
+enum TileType {
+	tile_fall=0,
+	tile_block,
+	tile_die,
+	tile_stair
+};
+
+enum frames_player {
+	frame_player_idle,
+	frame_player_left1,
+	frame_player_left2,
+	frame_player_jump
+	}; // auto from sprite ?
 
 int state, level, lives, swaps, nb_monsters;
+int horizontal_symmetry; // if the alterego symmetric horizontally or vertically ?
 
 uint8_t vram[SCREEN_Y][SCREEN_X];
 
-object *bg, *lside, *rside, *player, *alterego;
+object *bg, *lside, *rside;
+object *player, *alterego; // sprites
 object *monsters[MAX_MONSTER];
+
+uint8_t monsters_state [MAX_MONSTER];
+
+// individual frames in animations
+uint8_t monsters_frame [MAX_MONSTER];
+uint8_t player_frame;
+uint8_t alterego_frame;
 
 
 void level_frame( void )
@@ -59,35 +89,7 @@ void level_frame( void )
 	// in_swap ?
 	*/
 
-	// -- game logic
-	// move skulls : check if canmove (ie y-1 is ok, x next is not blocked), cant go on ? reverse for other types of skulls
-	/*
-	uint8_t *next_tile;
-	uint16_t *coord; //  movement coordinate
-	int16_t speed; // speed step
 
-	for (int m=0;m<nb_monsters;m++) {
-
-		speed = frame&4?1:-1; // 0,8 : speed : +1 - 4,C : speed = -1
-
-		// axis depends on frame & 8
-		if (frame & 8 == 0) {  // 0,4 : coord = x ; 8,C coord = y
-			coord = &player->x;
-			next_tile = &vram[player->y/8][(player->x+speed)/8]; // NON coords
-		} else {
-			coord = &player->y;
-			next_tile = &vram[(player->y+speed)/8][player->x/8]; // NON coords
-		}
-
-		if (tile_type[*next_tile]==tile_fall && tile_type[*(next_tile+SCREEN_X)]==tile_block) {
-			*coord += speed; // bouge vraiment
-		} else {
-			// invert move  : 0->4 4->0 8->C C->8  : invert bit 2 of frame_id
-			player->fr ^= 4;
-		}
-	}
-
-*/
 
 
 
@@ -103,22 +105,6 @@ void level_frame( void )
 void enter_title();
 void enter_credits();
 void enter_play();
-
-
-void game_init(void)
-{
-	bg = tilemap_new (maps_tset,0,0,maps_header, vram);
-
-	// overscan bars
-	lside = rect_new(0,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // left side overscan
-	rside = rect_new(VGA_H_PIXELS-32,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // right side overscan
-
-	// player=sprite_new();
-
-	bg->x=32; // center since tilemap is 256 pixels wide
-
-	enter_credits();
-}
 
 
 // Fade fill vram from a given map in pointer.
@@ -154,7 +140,12 @@ int fade()
 	return fade_pos;
 }
 
-
+void do_zero()
+{
+	static int pause = 60*3;
+	if (!pause--)
+		enter_credits();
+}
 
 void enter_credits()
 {
@@ -164,9 +155,9 @@ void enter_credits()
 
 void do_credits()
 {
-	static int pause=2*60; // frames_left
+	static int pause=3*60; // frames_left
 
-	if (!fade()) { // fading finished ?
+	if (!fade()) { // fading finished ? then pause.
 		if (!pause--)
 			enter_title();
 	}
@@ -182,7 +173,7 @@ void do_title()
 {
 	if (!fade()) {	// fade in finished ?
 		if (GAMEPAD_PRESSED(0,start))
-			enter_play();
+			enter_play(0);
 		// blink until press START button
 		if (vga_frame%128==0) {
 			// erase 2 lines
@@ -203,14 +194,24 @@ void display_hud()
 	vram[3][4] = maps_blue_digits+lives;
 	vram[3][8] = maps_blue_digits+swaps;
 }
+const uint8_t monster_tile_state[] = {
+	[maps_skull_right]=maps_st_skull_right,
+	[maps_skull_left]=maps_st_skull_left,
+	[maps_skull_up]=maps_st_skull_up,
+	[maps_skull_down]=maps_st_skull_down,
+};
 
-const uint8_t level_nb_alter[] = {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
+
+const uint8_t level_nb_alter[] = {8,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
+const uint8_t level_hori[]     = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+
 void start_level(int new_level)
 {
 	message("starting level %d\n", level);
 	level = new_level;
 	swaps = level_nb_alter[level];
 
+	nb_monsters = 0;
 
 	// load game screen to vram
 	for (int i=0;i<30;i++)
@@ -222,29 +223,28 @@ void start_level(int new_level)
 				case maps_player_start :
 					// put player here
 					vram[i][j]=1; // empty
-					/*
+
 					player->x = j*8+32;
-					player->y = i*8;
-					player->fr = frame_player_idle;
-					*/
+					player->y = i*8+8-player->h;
+					player->fr = 0;
+
 					break;
 				case maps_gum_start :
 					vram[i][j]=maps_gum; // why ;
 					break;
 
-/*
-				case maps_skull_right :
 				case maps_skull_left :
 				case maps_skull_up :
 				case maps_skull_down :
-					monster[nb_monsters]->x = i*8+4;
-					monster[nb_monsters]->y = j*8+4
-					monster[nb_monsters]->fr = 4*vram[j][i]-maps_skull_right; // 0,4,8, or c
-					nb_monsters++;
+				case maps_skull_right :
+					vram[i][j]=1; // empty
 
-					vram[i][j] =1;
+					monsters[nb_monsters]->x = 32+j*8;
+					monsters[nb_monsters]->y = i*8+8-monsters[nb_monsters]->h;
+					monsters_state[nb_monsters] = monster_tile_state[c];
+					nb_monsters++;
 					break;
-*/
+
 				default:
 					vram[i][j]=c;
 					break;
@@ -260,18 +260,19 @@ void start_level(int new_level)
 	vram[3][6] = maps_swaps+16;
 	vram[3][7] = maps_x;
 
+	horizontal_symmetry = level_hori[level];
+
 	display_hud();
 }
 
 
 
-void enter_play()
+void enter_play(int level)
 {
 	state=state_play;
 	lives = 5;
-	start_level(0);
+	start_level(level);
 }
-
 
 void animate_tiles()
 {
@@ -294,17 +295,145 @@ void animate_tiles()
 
 			// water
 			// stars
-
-
-
 		}
 }
+
+void animate_sprites()
+{
+	// simple animation loops
+
+	// animate monsters
+	for (int i=0;i<nb_monsters;i++){
+		uint8_t c=monsters_frame[i]++;
+		uint8_t s=monsters_state[i];
+
+		monsters[i]->fr = maps_anims[s][c];
+		if (monsters[i]->fr==255)
+		{
+			monsters_frame[i]=0;
+			monsters[i]->fr = maps_anims[s][0];
+		}
+	}
+	// player
+	// state = depends on buttons pressed !
+
+	player->fr = maps_anims[maps_st_player_idle][player_frame++];
+	if (player->fr==255)
+	{
+		player_frame=0;
+		player->fr = maps_anims[maps_st_player_idle][0];
+	}
+
+	// alter ego
+	alterego->fr = maps_anims[maps_st_alter_alter][alterego_frame++];
+	if (alterego->fr==255)
+	{
+		alterego_frame=0;
+		alterego->fr = maps_anims[maps_st_alter_alter][alterego_frame];
+	}
+
+}
+
+uint8_t tile_at(object *o, int dx, int dy)
+{
+	// gets the tile id at the object + dx/dy
+	return vram[(o->y+dy)/8][(o->x-32+dx)/8];
+}
+
+uint8_t test_at(object *o, int dx, int dy, uint8_t property)
+// test tile properties at this position
+{
+	uint8_t tid = tile_at(o,dx,dy);
+	uint8_t prop = maps_tset[maps_tset_attrs_offset+tid];
+	return prop & property;
+}
+
+void move_alterego()
+{
+	if (horizontal_symmetry) {
+		alterego->x = VGA_H_PIXELS - player->x;
+		alterego->y = player->y;
+	} else {
+		alterego->x = player->x;
+		alterego->y = VGA_V_PIXELS - player->y;
+	}
+}
+
+void move_skulls()
+{
+	// move skulls : check if canmove (ie y-1 is ok, x next is not blocked), cant go on ? reverse for other types of skulls
+	for (int m=0;m<nb_monsters;m++)
+		switch (monsters_state[m])
+		{
+			case maps_st_skull_right :
+				monsters[m]->x++; // go right
+				// test collide right / rightdown empty with tile properties
+				if (
+					test_at(monsters[m],8,15,maps_prop_empty) || // right down empty ?
+					!test_at(monsters[m],8,0, maps_prop_empty) // collide right ?
+					)
+					monsters_state[m]=maps_st_skull_left;
+				break;
+			case maps_st_skull_left :
+				monsters[m]->x--; // go left
+				if (
+					test_at(monsters[m],0,15,maps_prop_empty) || // left down empty ?
+					!test_at(monsters[m],0,0, maps_prop_empty) // collide left ?
+					)
+					monsters_state[m]=maps_st_skull_right;
+				break;
+			case maps_st_skull_up :
+				monsters[m]->y--; // go up
+				if (!test_at(monsters[m],0,-1,maps_prop_empty)) // test collide up
+					monsters_state[m]=maps_st_skull_down;
+				break;
+			case maps_st_skull_down :
+				monsters[m]->y++; // go down
+				if (!test_at(monsters[m],0,8,maps_prop_empty)) // test collide down
+					monsters_state[m]=maps_st_skull_up;
+				break;
+		} // switch
+}
+
+void game_init(void)
+{
+	bg = tilemap_new (maps_tset,0,0,maps_header, vram);
+	// initialize with empty, not transparent
+	memset(vram,1,sizeof(vram));
+
+	// overscan bars
+	lside = rect_new(0,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // left side overscan
+	rside = rect_new(VGA_H_PIXELS-32,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // right side overscan
+
+	// player=sprite_new();
+
+	bg->x=32; // center since tilemap is 256 pixels wide
+
+	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
+	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
+
+	for (int i=0;i<MAX_MONSTER;i++) {
+		monsters[i] = sprite_new(maps_sprites[maps_t_skull], 0,1024,0); // 0,1024
+	}
+
+	#ifndef SKIP_INTRO
+	state=state_zero;
+	#else
+	enter_play(14);
+	#endif
+
+}
+
 
 void game_frame(void)
 {
 	kbd_emulate_gamepad();
 
 	switch (state) {
+		case state_zero :
+			do_zero();
+			break;
+
 		case state_credits:
 			do_credits();
 			break;
@@ -314,8 +443,16 @@ void game_frame(void)
 			break;
 
 		case state_play :
+			display_hud();
+			// move_player
+			move_alterego();
+			if (vga_frame %2 == 0)
+				move_skulls();
+
 			if (vga_frame % 8 == 0)
 				animate_tiles();
+			else if (vga_frame % 4==1)
+				animate_sprites();
 			break;
 	}
 }
