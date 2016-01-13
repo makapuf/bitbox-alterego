@@ -2,7 +2,7 @@ build/
 misc/
 alterego
 maps.h
-maps_objects.c
+maps_data.c
 
 *_test
 *.bin

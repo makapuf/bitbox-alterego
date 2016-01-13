@@ -1,10 +1,11 @@
 
 USE_ENGINE = 1
 USE_CHIPTUNE = 1
+NO_AUDIO=1
 
 NAME=alterego
 
-GAME_C_FILES = $(NAME).c maps_objects.c
+GAME_C_FILES = $(NAME).c maps_data.c
 # this will fail first time
 GAME_BINARY_FILES = $(wildcard *.spr) maps.tset maps.tmap
 
@@ -20,4 +21,4 @@ maps.h: maps.tmx
 	python $(BITBOX)/scripts/tmx.py -maxs $^ > $*.h
 
 clean::
-	rm -rf *.spr *.tmap *.tset maps.h maps_objects.c
+	rm -rf *.spr *.tmap *.tset maps.h maps_data.c
