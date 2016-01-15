@@ -446,29 +446,6 @@ int collide(object *oa, object *ob)
     }
 }
 
-void game_init(void)
-{
-	bg = tilemap_new (maps_tset,0,0,maps_header, vram);
-	// initialize with empty, not transparent
-	memset(vram,1,sizeof(vram));
-
-	// overscan bars
-	lside = rect_new(0,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // left side overscan
-	rside = rect_new(VGA_H_PIXELS-32,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // right side overscan
-
-	// player=sprite_new();
-
-	bg->x=32; // center since tilemap is 256 pixels wide
-
-	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
-	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
-
-	#ifndef START_LEVEL
-	state=state_zero;
-	#else
-	enter_play(START_LEVEL);
-	#endif
-}
 
 void do_collide_player()
 {
@@ -509,6 +486,32 @@ void do_collide_alter()
 				break;
 			}
 }
+
+void game_init(void)
+{
+
+	bg = tilemap_new (maps_tset,0,0,maps_header, vram);
+	// initialize with empty, not transparent
+	memset(vram,1,sizeof(vram));
+
+	// overscan bars
+	lside = rect_new(0,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // left side overscan
+	rside = rect_new(VGA_H_PIXELS-32,0,32,VGA_V_PIXELS,100,RGB(0,0,0)); // right side overscan
+
+	// player=sprite_new();
+
+	bg->x=32; // center since tilemap is 256 pixels wide
+
+	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
+	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
+
+	#ifndef START_LEVEL
+	state=state_zero;
+	#else
+	enter_play(START_LEVEL);
+	#endif
+}
+
 
 void game_frame(void)
 {
