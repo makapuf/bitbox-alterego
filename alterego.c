@@ -1,6 +1,18 @@
 // alterego
 // see gameplay : https://www.youtube.com/watch?v=Tl77rKgX5Fc
 
+/*
+todo :
+
+fall from heaven
+die on water / one life less / test start
+succeed level
+succeed game
+sfx / music
+falling ground
+collision with stairs
+
+*/
 
 // use 320x240 mode
 #include "bitbox.h"
@@ -9,38 +21,29 @@
 
 #include <string.h>
 
-// #define SKIP_INTRO
+// define to immediately start at a level
+//#define START_LEVEL 20
 
 #define SCREEN_X 32
 #define SCREEN_Y 30
-#define MAX_MONSTER 8 // max nb per screen
+#define MAX_MONSTER 32 // max nb sprites per screen
 #define START_LIVES 5
+#define NB_LEVELS 25
 
 enum GameState {
 	state_zero,
 	state_credits,
 	state_title,
-	state_prestart,
 	state_play,
 	state_pause,
-	state_level_ended
+	state_swap,
+	state_level_ended,
+	state_die,
 };
 
-enum TileType {
-	tile_fall=0,
-	tile_block,
-	tile_die,
-	tile_stair
-};
-
-enum frames_player {
-	frame_player_idle,
-	frame_player_left1,
-	frame_player_left2,
-	frame_player_jump
-	}; // auto from sprite ?
-
-int state, level, lives, swaps, nb_monsters;
+int state, level, lives, swaps, nb_monsters, gums;
+int pause;
+int16_t target_swap; // target X or Y to swap
 int horizontal_symmetry; // if the alterego symmetric horizontally or vertically ?
 
 uint8_t vram[SCREEN_Y][SCREEN_X];
@@ -54,62 +57,13 @@ uint8_t monsters_state [MAX_MONSTER];
 // individual frames in animations
 uint8_t monsters_frame [MAX_MONSTER];
 uint8_t player_frame;
+uint8_t player_state;
 uint8_t alterego_frame;
-
-
-void level_frame( void )
-{
-	// -- input : left, right, up, down, swap (special frame ?)
-
-
-	// move guy if possible :
-	/*
-	si etat=swappe :
-	  	continue a swapper jusqu'a la fin
-	si etat=tombe :
-	    y++
-		si dessous = bloque, arret
-	sinon : // normal
-		calc prochain en fn UDLR
-		si dessous=vide :
-			etat=tombe
-		si next=vide & dessous = bloque :
-			avance
-	  	si sur une echelle & U/D: next=move
-
-	sur un pont : faire tomber !
-
-	// L/R si prochain ne bloque pas
-
-	// UD si sur un tile echelle
-	// tombe si sur un
-
-	// move alterego
-
-	// in_swap ?
-	*/
-
-
-
-
-
-	// check falling, inswap,
-	// collision badguy ?
-
-
-	// -- display ? update vram
-
-}
 
 
 void enter_title();
 void enter_credits();
 void enter_play();
-
-
-// Fade fill vram from a given map in pointer.
-// will reset if pass a new map pointer, to continue just pass zero
-// will return zero when finished
 
 #define FADE_FRAMES 180 // nb frames to fade (speed)
 static int fade_pos=0;
@@ -151,12 +105,11 @@ void enter_credits()
 {
 	state=state_credits;
 	start_fade(maps_tmap[maps_credits]);
+	pause=3*60;
 }
 
 void do_credits()
 {
-	static int pause=3*60; // frames_left
-
 	if (!fade()) { // fading finished ? then pause.
 		if (!pause--)
 			enter_title();
@@ -193,25 +146,58 @@ void display_hud()
 {
 	vram[3][4] = maps_blue_digits+lives;
 	vram[3][8] = maps_blue_digits+swaps;
+	vram[3][10] = maps_blue_digits+gums;
 }
-const uint8_t monster_tile_state[] = {
-	[maps_skull_right]=maps_st_skull_right,
-	[maps_skull_left]=maps_st_skull_left,
-	[maps_skull_up]=maps_st_skull_up,
-	[maps_skull_down]=maps_st_skull_down,
-};
 
+void new_sprite(int y,int x,uint8_t tid)
+{
+	// instantiates a sprite from the tile i,j on the map
 
-const uint8_t level_nb_alter[] = {8,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
-const uint8_t level_hori[]     = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+	// tile_id to sprite_state
+	static const uint8_t monster_tile_state[] = {
+		[maps_skull_right]=maps_st_skull_right,
+		[maps_skull_left]=maps_st_skull_left,
+		[maps_skull_up]=maps_st_skull_up,
+		[maps_skull_down]=maps_st_skull_down,
+
+		[maps_gum_start]=maps_st_gum_idle,
+		[maps_alter_gum_start]=maps_st_alter_gum_idle,
+		[maps_falling_start]=maps_st_falling_falling,
+	};
+	uint8_t sp_state= monster_tile_state[tid];
+
+	monsters_state[nb_monsters] = sp_state;
+	monsters[nb_monsters] = sprite_new(
+		maps_sprites[maps_objects_types[sp_state]],
+		32+x*8,
+		y*8+8,
+		0);
+
+	// height known after loading
+	monsters[nb_monsters]->y -= monsters[nb_monsters]->h;
+
+	nb_monsters++;
+
+	vram[y][x]=1; // empty
+}
 
 void start_level(int new_level)
 {
+	static const uint8_t level_nb_alter[NB_LEVELS] = {8,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
+	static const uint8_t level_hori[NB_LEVELS]     = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+
+	// unload preceding level
+	for (int i=0;i<nb_monsters;i++)
+	{
+		blitter_remove(monsters[i]);
+	}
+
+
 	message("starting level %d\n", level);
 	level = new_level;
 	swaps = level_nb_alter[level];
 
-	nb_monsters = 0;
+	nb_monsters = 0;gums=0;
 
 	// load game screen to vram
 	for (int i=0;i<30;i++)
@@ -223,28 +209,25 @@ void start_level(int new_level)
 				case maps_player_start :
 					// put player here
 					vram[i][j]=1; // empty
-
 					player->x = j*8+32;
 					player->y = i*8+8-player->h;
 					player->fr = 0;
-
 					break;
+
 				case maps_gum_start :
-					vram[i][j]=maps_gum; // why ;
+				case maps_alter_gum_start :
+					gums++;
+					new_sprite(i,j,c);
 					break;
 
 				case maps_skull_left :
 				case maps_skull_up :
 				case maps_skull_down :
 				case maps_skull_right :
-					vram[i][j]=1; // empty
-
-					monsters[nb_monsters]->x = 32+j*8;
-					monsters[nb_monsters]->y = i*8+8-monsters[nb_monsters]->h;
-					monsters_state[nb_monsters] = monster_tile_state[c];
-					nb_monsters++;
+					new_sprite(i,j,c);
 					break;
 
+				case maps_falling_start : // don't do anything now
 				default:
 					vram[i][j]=c;
 					break;
@@ -265,8 +248,6 @@ void start_level(int new_level)
 	display_hud();
 }
 
-
-
 void enter_play(int level)
 {
 	state=state_play;
@@ -274,33 +255,10 @@ void enter_play(int level)
 	start_level(level);
 }
 
-void animate_tiles()
-{
-	// scan tiles and animate them.
-	for (int i=6;i<25;i++) // 1/4 screen ?
-		for (int j=2;j<29;j++)
-		{
-			uint8_t c=vram[i][j];
-			// gums
-			if (c>=maps_gum && c<maps_gum+7) {
-				vram[i][j]+=1;
-			} else if (c==maps_gum+7) {
-				vram[i][j] = maps_gum;
-			// alter gums
-			} else if (c>=maps_alter_gum && c<maps_alter_gum+7) {
-				vram[i][j]+=1;
-			} else if (c==maps_alter_gum+7) {
-				vram[i][j]= maps_alter_gum;
-			}
-
-			// water
-			// stars
-		}
-}
 
 void animate_sprites()
 {
-	// simple animation loops
+	// simple animation loops.
 
 	// animate monsters
 	for (int i=0;i<nb_monsters;i++){
@@ -317,11 +275,11 @@ void animate_sprites()
 	// player
 	// state = depends on buttons pressed !
 
-	player->fr = maps_anims[maps_st_player_idle][player_frame++];
+	player->fr = maps_anims[player_state][player_frame++];
 	if (player->fr==255)
 	{
 		player_frame=0;
-		player->fr = maps_anims[maps_st_player_idle][0];
+		player->fr = maps_anims[player_state][0];
 	}
 
 	// alter ego
@@ -340,12 +298,71 @@ uint8_t tile_at(object *o, int dx, int dy)
 	return vram[(o->y+dy)/8][(o->x-32+dx)/8];
 }
 
+void set_at(object *o, int dx, int dy, uint8_t tid)
+{
+	vram[(o->y+dy)/8][(o->x-32+dx)/8]=tid;
+}
+
 uint8_t test_at(object *o, int dx, int dy, uint8_t property)
 // test tile properties at this position
 {
 	uint8_t tid = tile_at(o,dx,dy);
 	uint8_t prop = maps_tset[maps_tset_attrs_offset+tid];
 	return prop & property;
+}
+#define CAN_WALK (maps_prop_empty | maps_prop_ladder | maps_prop_gum)
+void move_player()
+{
+	uint8_t prev_state=player_state;
+
+
+	if (GAMEPAD_PRESSED(0,start)) {
+		// start a pause
+		state=state_pause;
+	} else if (test_at(player,0,10, maps_prop_empty)) {
+		// if nothing under : fall
+		player->y++;
+		player_state=maps_st_player_falling;
+	} else if (GAMEPAD_PRESSED(0,A)) {
+		// starts a swap
+		if ( swaps && test_at(alterego,0,4,CAN_WALK ) && test_at(alterego,7,4,CAN_WALK ) ) {
+			swaps--;
+			target_swap = horizontal_symmetry ? alterego->x : alterego->y;
+			state=state_swap;
+		} else { // XXX SFX fail
+
+		}
+	} else if (GAMEPAD_PRESSED(0,left)) {
+		player_state=maps_st_player_left;
+		if (test_at(player,-1,4, CAN_WALK ))
+			player->x--;
+	} else if (GAMEPAD_PRESSED(0,right)) {
+		player_state=maps_st_player_right;
+		if (test_at(player,+8,4, CAN_WALK ))
+			player->x++;
+	} else if (GAMEPAD_PRESSED(0,up) && test_at(player,4,9,maps_prop_ladder)) {
+		player->y--;
+		player_state=maps_st_player_ladder;
+	} else if (GAMEPAD_PRESSED(0,down) && (test_at(player,4,11,maps_prop_ladder) || test_at(player,4,11,maps_prop_empty))) {
+		player->y++;
+		player_state=maps_st_player_ladder;
+	} else {
+		player_state = maps_st_player_idle;
+	}
+
+
+	// touching tiles
+	if (test_at(player,0,4,maps_prop_gum))
+	{
+		gums--;
+		set_at(player,0,4,1);
+		// XXX sfx()
+	}
+
+	// reset animation if changed state
+	if (prev_state != player_state)
+		player_frame = 0;
+
 }
 
 void move_alterego()
@@ -365,6 +382,8 @@ void move_skulls()
 	for (int m=0;m<nb_monsters;m++)
 		switch (monsters_state[m])
 		{
+
+			// skulls
 			case maps_st_skull_right :
 				monsters[m]->x++; // go right
 				// test collide right / rightdown empty with tile properties
@@ -392,7 +411,39 @@ void move_skulls()
 				if (!test_at(monsters[m],0,8,maps_prop_empty)) // test collide down
 					monsters_state[m]=maps_st_skull_up;
 				break;
+			default :
+				break;
 		} // switch
+}
+
+void move_swap()
+{
+	if (horizontal_symmetry) {
+		if (player->x == target_swap)
+			state=state_play;
+		else
+			player->x += target_swap>player->x ? 1 : -1;
+	} else {
+		if (player->y == target_swap)
+			state=state_play;
+		else
+			player->y += target_swap>player->y ? 1 : -1;
+	}
+
+}
+
+// standard AABB collision check
+int collide(object *oa, object *ob)
+{
+    if (oa->x+oa->w < ob->x ||
+        oa->y+oa->h < ob->y ||
+        oa->x > ob->x+ob->w ||
+        oa->y > ob->y+ob->h)
+    {
+        return 0;
+    } else {
+    	return 1;
+    }
 }
 
 void game_init(void)
@@ -412,18 +463,52 @@ void game_init(void)
 	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
 	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
 
-	for (int i=0;i<MAX_MONSTER;i++) {
-		monsters[i] = sprite_new(maps_sprites[maps_t_skull], 0,1024,0); // 0,1024
-	}
-
-	#ifndef SKIP_INTRO
+	#ifndef START_LEVEL
 	state=state_zero;
 	#else
-	enter_play(14);
+	enter_play(START_LEVEL);
 	#endif
-
 }
 
+void do_collide_player()
+{
+	// test collisions with all monsters
+	for (int i=0;i<nb_monsters;i++)
+		if (collide(player, monsters[i])) {
+			switch (monsters_state[i]) {
+				case maps_st_skull_up :
+				case maps_st_skull_down :
+				case maps_st_skull_left :
+				case maps_st_skull_right :
+					pause = 120;
+					state = state_die;
+					break;
+				case maps_st_gum_idle :
+					// hide it
+					monsters[i]->y=1024;
+					gums--;
+					break;
+			}
+			break;
+		}
+}
+
+
+void do_collide_alter()
+{
+	// only test altergums
+	for (int i=0;i<nb_monsters;i++)
+		if (
+			monsters_state[i] == maps_st_alter_gum_idle \
+			&& collide(alterego, monsters[i])
+			)
+			{
+				// hide it
+				monsters[i]->y=1024;
+				gums--;
+				break;
+			}
+}
 
 void game_frame(void)
 {
@@ -442,17 +527,45 @@ void game_frame(void)
 			do_title();
 			break;
 
+		case state_pause:
+			for (int i=0;i<5;i++)
+				vram[3][10+i] = (vga_frame/32)%2 ? (char[]){144,129,111,109,133}[i]: 1;
+			if (GAMEPAD_PRESSED(0,start)) {
+				for (int i=0;i<5;i++)
+					vram[3][10+i]=1;
+				state=state_play;
+			}
+			break;
+
+		case state_swap:
+			move_swap();
+			move_swap();
+			move_swap();
+			move_alterego();
+			break;
+
 		case state_play :
 			display_hud();
-			// move_player
+			move_player();
 			move_alterego();
-			if (vga_frame %2 == 0)
-				move_skulls();
 
-			if (vga_frame % 8 == 0)
-				animate_tiles();
-			else if (vga_frame % 4==1)
-				animate_sprites();
+			switch(vga_frame%4) {
+				case 0 :
+				case 2 :
+					move_skulls();
+					break;
+				case 1 :
+					do_collide_alter();
+					animate_sprites();
+					break;
+				case 3 :
+					do_collide_player();
+			}
+			break;
+
+		case state_die :
+			if (!pause--)
+				enter_play(level); //  restart current level
 			break;
 	}
 }

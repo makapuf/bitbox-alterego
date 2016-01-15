@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="32" height="30" tilewidth="8" tileheight="8" nextobjectid="19">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="32" height="30" tilewidth="8" tileheight="8" nextobjectid="22">
  <tileset firstgid="1" name="tiles" tilewidth="8" tileheight="8" tilecount="256">
   <image source="tiles.png" width="128" height="128"/>
-  <tile id="0">
+  <terraintypes>
+   <terrain name="empty" tile="-1"/>
+   <terrain name="water" tile="-1"/>
+   <terrain name="ladder" tile="-1"/>
+  </terraintypes>
+  <tile id="0" terrain="0,0,0,0">
    <properties>
     <property name="is_empty" value=""/>
    </properties>
@@ -27,27 +32,27 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
-  <tile id="18">
+  <tile id="18" terrain="0,0,0,0">
    <properties>
     <property name="is_empty" value=""/>
    </properties>
   </tile>
-  <tile id="19">
+  <tile id="19" terrain="0,0,0,0">
    <properties>
     <property name="is_empty" value=""/>
    </properties>
   </tile>
-  <tile id="20">
+  <tile id="20" terrain="2,2,2,2">
    <properties>
     <property name="is_ladder" value=""/>
    </properties>
   </tile>
-  <tile id="21">
+  <tile id="21" terrain="0,0,0,0">
    <properties>
     <property name="is_empty" value=""/>
    </properties>
   </tile>
-  <tile id="22">
+  <tile id="22" terrain="0,0,0,0">
    <properties>
     <property name="is_empty" value=""/>
    </properties>
@@ -57,22 +62,34 @@
     <property name="name" value="gum_start"/>
    </properties>
   </tile>
-  <tile id="28">
+  <tile id="24">
+   <properties>
+    <property name="name" value="alter_gum_start"/>
+   </properties>
+  </tile>
+  <tile id="25" terrain="0,0,0,0"/>
+  <tile id="26" terrain="0,0,0,0"/>
+  <tile id="27">
+   <properties>
+    <property name="name" value="falling_start"/>
+   </properties>
+  </tile>
+  <tile id="28" terrain="1,1,1,1">
    <properties>
     <property name="is_water" value=""/>
    </properties>
   </tile>
-  <tile id="29">
+  <tile id="29" terrain="1,1,1,1">
    <properties>
     <property name="is_water" value=""/>
    </properties>
   </tile>
-  <tile id="30">
+  <tile id="30" terrain="1,1,1,1">
    <properties>
     <property name="is_water" value=""/>
    </properties>
   </tile>
-  <tile id="31">
+  <tile id="31" terrain="1,1,1,1">
    <properties>
     <property name="is_water" value=""/>
    </properties>
@@ -122,11 +139,13 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
-  <tile id="41">
+  <tile id="41" terrain="2,2,2,2">
    <properties>
     <property name="is_ladder" value=""/>
    </properties>
   </tile>
+  <tile id="42" terrain="0,0,0,0"/>
+  <tile id="43" terrain="0,0,0,0"/>
   <tile id="44">
    <properties>
     <property name="is_solid" value=""/>
@@ -137,7 +156,7 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
-  <tile id="47">
+  <tile id="47" terrain="2,2,2,2">
    <properties>
     <property name="is_ladder" value=""/>
    </properties>
@@ -167,9 +186,9 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
-  <tile id="53">
+  <tile id="53" terrain="2,2,2,2">
    <properties>
-    <property name="is_empty" value=""/>
+    <property name="is_ladder" value=""/>
    </properties>
   </tile>
   <tile id="54">
@@ -177,7 +196,8 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
-  <tile id="60">
+  <tile id="55" terrain="0,0,0,0"/>
+  <tile id="60" terrain="2,2,2,2">
    <properties>
     <property name="is_ladder" value=""/>
    </properties>
@@ -197,6 +217,15 @@
     <property name="is_solid" value=""/>
    </properties>
   </tile>
+  <tile id="128">
+   <properties>
+    <property name="name" value="letter_a"/>
+   </properties>
+  </tile>
+  <tile id="144" terrain="1,1,1,1"/>
+  <tile id="145" terrain="1,1,1,1"/>
+  <tile id="146" terrain="1,1,1,1"/>
+  <tile id="147" terrain="1,1,1,1"/>
   <tile id="155">
    <properties>
     <property name="name" value="lives"/>
@@ -207,14 +236,78 @@
     <property name="name" value="swaps"/>
    </properties>
   </tile>
+  <tile id="160" terrain="1,1,1,1"/>
+  <tile id="161" terrain="1,1,1,1"/>
+  <tile id="162" terrain="1,1,1,1"/>
   <tile id="176">
    <properties>
+    <property name="is_falling" value=""/>
     <property name="name" value="falling"/>
+   </properties>
+  </tile>
+  <tile id="177" terrain="0,0,0,0">
+   <properties>
+    <property name="is_falling" value=""/>
+   </properties>
+  </tile>
+  <tile id="178" terrain="0,0,0,0">
+   <properties>
+    <property name="is_falling" value=""/>
+   </properties>
+  </tile>
+  <tile id="179" terrain="0,0,0,0">
+   <properties>
+    <property name="is_falling" value=""/>
    </properties>
   </tile>
   <tile id="208">
    <properties>
+    <property name="is_gum" value=""/>
     <property name="name" value="gum"/>
+   </properties>
+   <animation>
+    <frame tileid="208" duration="100"/>
+    <frame tileid="209" duration="100"/>
+    <frame tileid="210" duration="100"/>
+    <frame tileid="211" duration="100"/>
+    <frame tileid="212" duration="100"/>
+    <frame tileid="213" duration="100"/>
+    <frame tileid="214" duration="100"/>
+   </animation>
+  </tile>
+  <tile id="209">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="210">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="211">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="212">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="213">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="214">
+   <properties>
+    <property name="is_gum" value=""/>
+   </properties>
+  </tile>
+  <tile id="215">
+   <properties>
+    <property name="is_gum" value=""/>
    </properties>
   </tile>
   <tile id="216">
@@ -323,7 +416,48 @@
    </animation>
   </tile>
  </tileset>
- <layer name="map1" width="32" height="30">
+ <tileset firstgid="291" name="alter_gum" tilewidth="8" tileheight="8" tilecount="8">
+  <image source="../../../../../../bitbox-projects/alterego/alter_gum.png" width="64" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="100"/>
+    <frame tileid="1" duration="100"/>
+    <frame tileid="2" duration="100"/>
+    <frame tileid="3" duration="100"/>
+    <frame tileid="4" duration="100"/>
+    <frame tileid="5" duration="100"/>
+    <frame tileid="6" duration="100"/>
+    <frame tileid="7" duration="100"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="299" name="gum" tilewidth="8" tileheight="8" tilecount="8">
+  <image source="../../../../../../bitbox-projects/alterego/gum.png" width="64" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="100"/>
+    <frame tileid="1" duration="100"/>
+    <frame tileid="2" duration="100"/>
+    <frame tileid="3" duration="100"/>
+    <frame tileid="4" duration="100"/>
+    <frame tileid="5" duration="100"/>
+    <frame tileid="6" duration="100"/>
+    <frame tileid="7" duration="100"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="307" name="falling" tilewidth="8" tileheight="8" tilecount="4">
+  <image source="../../../../../../bitbox-projects/alterego/falling.png" width="32" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="100"/>
+    <frame tileid="1" duration="100"/>
+    <frame tileid="2" duration="100"/>
+    <frame tileid="3" duration="100"/>
+   </animation>
+  </tile>
+ </tileset>
+ <layer name="map1" width="32" height="30" visible="0">
   <data encoding="base64" compression="zlib">
    eJxjZGBgYBzFZOOpQDwNyvYAYlcg9oFif6h4OpSdBBV3oaL9S4F4GZQdAcShQBwDxfFQ8XIouwgqHjIIwm0oY0EgFsJC6w6gG+hpN7obQHaLDID9ekhuGMh0QI+wFyXD/4pk+gcbLUpAnhSaFDfAwhab/0lJH6SkE2EkvcIU2A8zB5Y/hEnQi+5eUuyXwGMOqWFHajpHT5MwvjgJdothcTex/iBXHzrGVp4RE3/o+kiNd1LiVgmPHKWYWnmdkvJ5IO3GFociWOIXlzi+dDQYsSydMbr9ckCsAKVhWB6K5bBgeTT18mg0zDx5JDay+oEO71E8ODAAn30fSQ==
   </data>
@@ -383,7 +517,7 @@
    eJztk00KwjAQhdNbVHCj+FeTS4i6EEQQdSGIG4/gidSL+goJDEPSJmlou+jiY5qfeS+ZTjIhRDaQnAPYgj04gg04gR14teB/BxdwAw9wBk9wBe8e1GfAzlrHUULNnGnX+RdgldDf6Pn6L8CSnT0GU0Oj5+svSU6TOhRERwX489zQfjA143cI8Te5MXUoLPmh/i6NKYm5sPeH6+xN7t80prq/DynuX+ZI/a0i/r9k41B/6Vin72BSsVYyJ+cP9TfM2His4TU28yHasXv4f/bdX6eduuer3oIN2YK3q6/4OZSOks3belOyHNpzdK/y8O6KT8tw/6+Fn2Oertftcel0Xe+BfvAHgTJI8w==
   </data>
  </layer>
- <layer name="map13" width="32" height="30">
+ <layer name="map13" width="32" height="30" visible="0">
   <data encoding="base64" compression="zlib">
    eJztlDkOwjAQRZ1bpGUnsY+BBBRQIQEFVByBC4Evml/YkrFM5N0pXDzN4kzGsyQNIaSpROcEjmAHzkLfgwN4Zcj/AHdwAU+hX8ENvCfQn4o7faYYlTXYgK14l7RtZWj+TuQ21bKyiItVv2svU9a/1J6RditIUb+vDM0voYAJSRWfaqfY/1B88i8i3H/uGW+aX2fw++6L7azlTHvFxxzqkPGMjO9Hivnl2p+W/H7zJmaB848tS97BtfdU0/X/j0TdMf3MdW9L8cmMnp+D7x+44Vz3meL5SGzpflemwQBkSkP7
   </data>
@@ -393,7 +527,7 @@
    eJztkrsOwjAMRZO/KBILDNDXbzBRwcREBQNiYEYM/D2uZEuWlXdb0SHDURRbyc29jlZK6cxoOuAMnIAD7l/YewBH4In1bgb9HrgDN+CC+y/23sAV+GC9X0BemcxYNn/U3gF7tg61ekadtaASbyB96vN3hVLiumK1itVj/MtzBavb9CuDT5sP7r806NtyM3mR/qXOFP55PWX+WmiE+pf3NYn+Kb9a3O/6n7H+qVcouw/Sb1jP5Emeoz/tm7/PB8/YlaXMjd/n8x8y/4GtyMp1zjVjoo3wkTr/FGyZtTgD0xym0rbl4sP1NzKZzDL4AUd/IOQ=
   </data>
  </layer>
- <layer name="map15" width="32" height="30" visible="0">
+ <layer name="map15" width="32" height="30">
   <data encoding="base64" compression="zlib">
    eJztlcEKwjAMhre3mLCLKLp1voSgoAcHgoIe3NFH8H2cL2oKCZSStuk2D+oOH8vSNP/SxJomSZKOdOYArIENsEXfHqjR3qFfx9zRrgfUvwFH4ASc0XcFGrQv6NcxD7SbAfV/idKwF8CSeZc+XXkKj75eyxF7XxmhXTD6lLf06Ntr3HnE1m/nDNWvnxNHbKw2l6Nr/ZoVUFm+KrDepf4poAKxUihHJqyfzlAZsTPsCcHtzQx8PZPWpKw9eSRmLdQnuzcSuJn65D4bbqZi9vbV/1ZUj5757hMNzfk84Wee9Lm5lfz+uW/iZjx1+Ln/DyLm/ks9eaRnKalRUn9ffen95zrHZySuvnWtvwVeBqH3ofvfMhocFDd0/83c5rdwtk/fV//I//EG8MNG+Q==
   </data>
@@ -438,7 +572,7 @@
    eJztlTEOwjAMRcsZ6FBG4AQBCqwMsMDCAAvsHIHzUC6KkWzp68uBpipiyfAUkrr59sdJB0VRDDK9shM2wl7Y6tpN1w7KL/XPwlG4CCddu+vaVfm3R5nMJ5bwe0rPKiee1yYddWfCXPUDzBfwO+jc3vGexeZtcgiqj3vUlE8N8TVpeLEhwYM1+G97DIXSqR1zCBozhPdKZd3x/18p6PVb60GwvyGx5rb6VmcjPJXG8aVv/UoxnYYwXzAuOPu17T/z0+v/GnStfu45Hu08te0/r78wB9RuSNvTWUb2TfEE6+b6MQ/vfKT478F1o+4TsD7oW5/7DnNA/dhdk6o/1nGko9XFfrMXeA9UHfWxj/gOXRTfvws8x/guZ5Dz+PZdiMWn+G9nxe5zHMvIPPYsdqYzmX/zAl+wT1w=
   </data>
  </layer>
- <layer name="map24" width="32" height="30" visible="0">
+ <layer name="map24" width="32" height="30">
   <data encoding="base64" compression="zlib">
    eJztlU0KwjAQhdMztItuRTyAPxG3LgQXirgQXCiCegL1/vgCUxjCJG1TbRSy+Jh2XpqXnwfNlFJZojNLsAFbsAM3cCfN1DVYgSvVT/vvwQmcwQU8wYs0U4/gAB5UY59XIvHvjCN7zHtYl8vDp/m+Sf7h/kNQUuWaq19RtvAz2ZmAqfA8q9F4j4/lvTp/af6qas/6tNWXxuoG/guquXWW5r0gbK1gutTPrbl/PX+DiP78zvhcUoaNNvL4t8m9lAE7j033ae+hK67c+PYZkrXQe+rjP5hIfIM3YtogiA==
   </data>
@@ -473,7 +607,7 @@
    eJztwwEJAAAMBKH7/qXXYyi4aqqqqvr8ATgkA8E=
   </data>
  </layer>
- <objectgroup name="objects">
+ <objectgroup name="objects" visible="0">
   <object id="1" name="right" type="skull" gid="257" x="13.25" y="41.75" width="8" height="10"/>
   <object id="2" name="left" type="skull" gid="261" x="34" y="42.5" width="8" height="10"/>
   <object id="3" name="up" type="skull" gid="265" x="48.5" y="42" width="8" height="10"/>
@@ -484,5 +618,8 @@
   <object id="10" name="falling" type="player" gid="285" x="116.75" y="50.75" width="8" height="11"/>
   <object id="11" name="alter" type="alter" gid="287" x="14.75" y="96" width="8" height="11"/>
   <object id="18" name="idle" type="player" gid="286" x="173" y="51.5" width="8" height="11"/>
+  <object id="19" name="idle" type="alter_gum" gid="291" x="190.5" y="49" width="8" height="8"/>
+  <object id="20" name="idle" type="gum" gid="299" x="202" y="50.5" width="8" height="8"/>
+  <object id="21" name="falling" type="falling" gid="307" x="214.5" y="50" width="8" height="8"/>
  </objectgroup>
 </map>
