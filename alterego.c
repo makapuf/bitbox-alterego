@@ -4,14 +4,14 @@
 /*
 todo :
 
-fall from heaven
-die on water / one life less / test start
-succeed level
-succeed game
-sfx / music
-falling ground
-collision with stairs
+phantoms must walk on ladders
 
+succeed game
+
+sfx / music
+Falling ground : icon
+
+fade out ? (if zero:ok, sinon darken bits.)
 */
 
 // use 320x240 mode
@@ -22,7 +22,7 @@ collision with stairs
 #include <string.h>
 
 // define to immediately start at a level
-//#define START_LEVEL 20
+// #define START_LEVEL 3
 
 #define SCREEN_X 32
 #define SCREEN_Y 30
@@ -38,7 +38,8 @@ enum GameState {
 	state_pause,
 	state_swap,
 	state_level_ended,
-	state_die,
+	state_prestart,
+	state_game_over,
 };
 
 int state, level, lives, swaps, nb_monsters, gums;
@@ -81,6 +82,7 @@ int fade()
 	if (!fade_map)
 		return 0;
 
+
  	// continue fading
 	for (int i=0;i<(1+SCREEN_X*SCREEN_Y/FADE_FRAMES);i++) { // fill speed : chars / frame to attain a full screen in N frames.
 		vram_arr[fade_pos]=fade_map[fade_pos];
@@ -96,7 +98,6 @@ int fade()
 
 void do_zero()
 {
-	static int pause = 60*3;
 	if (!pause--)
 		enter_credits();
 }
@@ -105,7 +106,7 @@ void enter_credits()
 {
 	state=state_credits;
 	start_fade(maps_tmap[maps_credits]);
-	pause=3*60;
+	pause=5*60;
 }
 
 void do_credits()
@@ -117,7 +118,6 @@ void do_credits()
 }
 
 void enter_title() {
-	vga_frame=0;
 	state = state_title;
 	start_fade(maps_tmap[maps_title]); // start fade
 }
@@ -125,8 +125,12 @@ void enter_title() {
 void do_title()
 {
 	if (!fade()) {	// fade in finished ?
-		if (GAMEPAD_PRESSED(0,start))
+		if (GAMEPAD_PRESSED(0,start)) {
+			lives = 7;
 			enter_play(0);
+		}
+
+
 		// blink until press START button
 		if (vga_frame%128==0) {
 			// erase 2 lines
@@ -146,7 +150,7 @@ void display_hud()
 {
 	vram[3][4] = maps_blue_digits+lives;
 	vram[3][8] = maps_blue_digits+swaps;
-	vram[3][10] = maps_blue_digits+gums;
+	//	vram[3][10] = maps_blue_digits+gums;
 }
 
 void new_sprite(int y,int x,uint8_t tid)
@@ -181,23 +185,28 @@ void new_sprite(int y,int x,uint8_t tid)
 	vram[y][x]=1; // empty
 }
 
-void start_level(int new_level)
-{
-	static const uint8_t level_nb_alter[NB_LEVELS] = {8,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5};
-	static const uint8_t level_hori[NB_LEVELS]     = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
+void clear_sprites(void)
+{
 	// unload preceding level
 	for (int i=0;i<nb_monsters;i++)
 	{
 		blitter_remove(monsters[i]);
 	}
+	nb_monsters=0;
+
+	// hide player / alterego
+	player->y=1024;
+	alterego->y=1024;
+
+}
 
 
-	message("starting level %d\n", level);
+void start_level(int new_level)
+{
 	level = new_level;
-	swaps = level_nb_alter[level];
 
-	nb_monsters = 0;gums=0;
+	gums=0;
 
 	// load game screen to vram
 	for (int i=0;i<30;i++)
@@ -233,6 +242,10 @@ void start_level(int new_level)
 					break;
 			}
 		}
+	swaps = vram[0][0]-maps_blue_digits;
+	horizontal_symmetry = (vram[0][1]==112)?0:1; // 112 = V
+
+	vram[0][0]=1;vram[0][1]=1;
 
 	// draw swaps / lives guys header
 	vram[2][2] = maps_lives;
@@ -243,7 +256,6 @@ void start_level(int new_level)
 	vram[3][6] = maps_swaps+16;
 	vram[3][7] = maps_x;
 
-	horizontal_symmetry = level_hori[level];
 
 	display_hud();
 }
@@ -251,7 +263,6 @@ void start_level(int new_level)
 void enter_play(int level)
 {
 	state=state_play;
-	lives = 5;
 	start_level(level);
 }
 
@@ -310,6 +321,10 @@ uint8_t test_at(object *o, int dx, int dy, uint8_t property)
 	uint8_t prop = maps_tset[maps_tset_attrs_offset+tid];
 	return prop & property;
 }
+
+void die_level(void);
+
+
 #define CAN_WALK (maps_prop_empty | maps_prop_ladder | maps_prop_gum)
 void move_player()
 {
@@ -319,7 +334,7 @@ void move_player()
 	if (GAMEPAD_PRESSED(0,start)) {
 		// start a pause
 		state=state_pause;
-	} else if (test_at(player,0,10, maps_prop_empty)) {
+	} else if (test_at(player,0,10, maps_prop_empty) && test_at(player,7,10, maps_prop_empty)) {
 		// if nothing under : fall
 		player->y++;
 		player_state=maps_st_player_falling;
@@ -334,16 +349,36 @@ void move_player()
 		}
 	} else if (GAMEPAD_PRESSED(0,left)) {
 		player_state=maps_st_player_left;
-		if (test_at(player,-1,4, CAN_WALK ))
+		if (test_at(player,-1,4, CAN_WALK )) {
+			// test if we're changing tiles and we're on a falling element  : transform into falling sprite
+			if (player->x%8==0 && tile_at(player,4,14)==maps_falling_start) {
+				// initiate fall animation
+				set_at(player,4,14,1);
+			}
+
 			player->x--;
+		}
 	} else if (GAMEPAD_PRESSED(0,right)) {
 		player_state=maps_st_player_right;
-		if (test_at(player,+8,4, CAN_WALK ))
+		if (test_at(player,+8,4, CAN_WALK )) {
+			// test if we're changing tiles and we're on a falling element  : transform into falling sprite
+			if (player->x%8==7 && tile_at(player,0,14)==maps_falling_start) {
+				// initiate fall animation
+				set_at(player,0,14,1);
+			}
+
 			player->x++;
-	} else if (GAMEPAD_PRESSED(0,up) && test_at(player,4,9,maps_prop_ladder)) {
+		}
+	} else if (GAMEPAD_PRESSED(0,up)   \
+		&& (test_at(player,0,9,maps_prop_ladder ) \
+			|| test_at(player,7,9,maps_prop_ladder ))
+		) {
 		player->y--;
 		player_state=maps_st_player_ladder;
-	} else if (GAMEPAD_PRESSED(0,down) && (test_at(player,4,11,maps_prop_ladder) || test_at(player,4,11,maps_prop_empty))) {
+	} else if (GAMEPAD_PRESSED(0,down) \
+			&& (test_at(player,0,11,maps_prop_ladder) \
+				|| test_at(player,7,11,maps_prop_ladder))
+			) {
 		player->y++;
 		player_state=maps_st_player_ladder;
 	} else {
@@ -357,22 +392,27 @@ void move_player()
 		gums--;
 		set_at(player,0,4,1);
 		// XXX sfx()
+	} else if (test_at(player,0,14,maps_prop_water)) {
+		die_level();
 	}
 
 	// reset animation if changed state
 	if (prev_state != player_state)
 		player_frame = 0;
 
+	if (player->y >= 208)
+		die_level();
+
 }
 
 void move_alterego()
 {
 	if (horizontal_symmetry) {
-		alterego->x = VGA_H_PIXELS - player->x;
+		alterego->x = VGA_H_PIXELS - player->x - 4;
 		alterego->y = player->y;
 	} else {
 		alterego->x = player->x;
-		alterego->y = VGA_V_PIXELS - player->y;
+		alterego->y = VGA_V_PIXELS - player->y - 4;
 	}
 }
 
@@ -438,14 +478,44 @@ int collide(object *oa, object *ob)
     if (oa->x+oa->w < ob->x ||
         oa->y+oa->h < ob->y ||
         oa->x > ob->x+ob->w ||
-        oa->y > ob->y+ob->h)
-    {
+        oa->y > ob->y+ob->h) {
         return 0;
     } else {
     	return 1;
     }
 }
 
+
+void finish_level()
+{
+	clear_sprites();
+	// next level !
+	level+=1;
+	state=state_prestart;
+	pause=120;
+}
+
+void die_level(void)
+{
+	lives--;
+	clear_sprites();
+	// test game over ?
+	if (lives) {
+		pause = 120;
+		state = state_prestart;
+	} else {
+		// enter game over
+		memcpy(vram, maps_tmap[maps_gameover],sizeof(vram));
+		pause=240;
+		state = state_game_over;
+	}
+}
+
+void do_game_over(void)
+{
+	if (!pause--)
+		enter_title();
+}
 
 void do_collide_player()
 {
@@ -457,13 +527,13 @@ void do_collide_player()
 				case maps_st_skull_down :
 				case maps_st_skull_left :
 				case maps_st_skull_right :
-					pause = 120;
-					state = state_die;
+					die_level();
 					break;
 				case maps_st_gum_idle :
 					// hide it
 					monsters[i]->y=1024;
 					gums--;
+
 					break;
 			}
 			break;
@@ -505,10 +575,13 @@ void game_init(void)
 	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
 	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
 
+	lives = START_LIVES;
+
 	#ifndef START_LEVEL
 	state=state_zero;
+	pause = 60*3;
 	#else
-	enter_play(START_LEVEL);
+	enter_play(START_LEVEL-1);
 	#endif
 }
 
@@ -531,6 +604,7 @@ void game_frame(void)
 			break;
 
 		case state_pause:
+			// write PAUSE or empty
 			for (int i=0;i<5;i++)
 				vram[3][10+i] = (vga_frame/32)%2 ? (char[]){144,129,111,109,133}[i]: 1;
 			if (GAMEPAD_PRESSED(0,start)) {
@@ -564,12 +638,19 @@ void game_frame(void)
 				case 3 :
 					do_collide_player();
 			}
+
+			if (!gums) {
+				finish_level();
+			}
 			break;
 
-		case state_die :
+		case state_prestart :
 			if (!pause--)
 				enter_play(level); //  restart current level
 			break;
+
+		case state_game_over :
+			do_game_over();
 	}
 }
 
