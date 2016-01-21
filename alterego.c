@@ -126,7 +126,6 @@ void do_title()
 {
 	if (!fade()) {	// fade in finished ?
 		if (GAMEPAD_PRESSED(0,start)) {
-			lives = 7;
 			enter_play(0);
 		}
 
