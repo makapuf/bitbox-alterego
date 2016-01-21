@@ -256,6 +256,7 @@ void start_level(int new_level)
 	vram[3][6] = maps_swaps+16;
 	vram[3][7] = maps_x;
 
+	player_state = maps_st_player_idle;
 
 	display_hud();
 }
