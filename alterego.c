@@ -401,7 +401,7 @@ void move_player()
 	if (prev_state != player_state)
 		player_frame = 0;
 
-	if (player->y >= 208)
+	if (player->y >= 208 && player->y<1024) // 1024 is just hidden sprite
 		die_level();
 
 }
