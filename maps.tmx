@@ -416,7 +416,7 @@
   </tile>
  </tileset>
  <tileset firstgid="291" name="alter_gum" tilewidth="8" tileheight="8" tilecount="8">
-  <image source="../../../../../../bitbox-projects/alterego/alter_gum.png" width="64" height="8"/>
+  <image source="alter_gum.png" width="64" height="8"/>
   <tile id="0">
    <animation>
     <frame tileid="0" duration="100"/>
@@ -431,7 +431,7 @@
   </tile>
  </tileset>
  <tileset firstgid="299" name="gum" tilewidth="8" tileheight="8" tilecount="8">
-  <image source="../../../../../../bitbox-projects/alterego/gum.png" width="64" height="8"/>
+  <image source="gum.png" width="64" height="8"/>
   <tile id="0">
    <animation>
     <frame tileid="0" duration="100"/>
@@ -446,7 +446,7 @@
   </tile>
  </tileset>
  <tileset firstgid="307" name="falling" tilewidth="8" tileheight="8" tilecount="4">
-  <image source="../../../../../../bitbox-projects/alterego/falling.png" width="32" height="8"/>
+  <image source="falling.png" width="32" height="8"/>
   <tile id="0">
    <animation>
     <frame tileid="0" duration="100"/>
