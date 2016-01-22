@@ -47,6 +47,9 @@ int pause;
 int16_t target_swap; // target X or Y to swap
 int horizontal_symmetry; // if the alterego symmetric horizontally or vertically ?
 
+uint16_t old_gamepad;
+uint16_t gamepad_pressed;
+
 uint8_t vram[SCREEN_Y][SCREEN_X];
 
 object *bg, *lside, *rside;
@@ -98,7 +101,7 @@ int fade()
 
 void do_zero()
 {
-	if (!pause--)
+	if (!pause-- || (gamepad_pressed & gamepad_start))
 		enter_credits();
 }
 
@@ -112,7 +115,7 @@ void enter_credits()
 void do_credits()
 {
 	if (!fade()) { // fading finished ? then pause.
-		if (!pause--)
+		if (!pause-- || (gamepad_pressed & gamepad_start))
 			enter_title();
 	}
 }
@@ -125,7 +128,8 @@ void enter_title() {
 void do_title()
 {
 	if (!fade()) {	// fade in finished ?
-		if (GAMEPAD_PRESSED(0,start)) {
+		if (gamepad_pressed & gamepad_start) {
+			lives = 7;
 			enter_play(0);
 		}
 
@@ -331,7 +335,7 @@ void move_player()
 	uint8_t prev_state=player_state;
 
 
-	if (GAMEPAD_PRESSED(0,start)) {
+	if (gamepad_pressed & gamepad_start) {
 		// start a pause
 		state=state_pause;
 	} else if (test_at(player,0,10, maps_prop_empty) && test_at(player,7,10, maps_prop_empty)) {
@@ -589,6 +593,8 @@ void game_init(void)
 void game_frame(void)
 {
 	kbd_emulate_gamepad();
+	gamepad_pressed = gamepad_buttons[0] & ~old_gamepad;
+	old_gamepad = gamepad_buttons[0];
 
 	switch (state) {
 		case state_zero :
@@ -607,7 +613,7 @@ void game_frame(void)
 			// write PAUSE or empty
 			for (int i=0;i<5;i++)
 				vram[3][10+i] = (vga_frame/32)%2 ? (char[]){144,129,111,109,133}[i]: 1;
-			if (GAMEPAD_PRESSED(0,start)) {
+			if (gamepad_pressed & gamepad_start) {
 				for (int i=0;i<5;i++)
 					vram[3][10+i]=1;
 				state=state_play;
