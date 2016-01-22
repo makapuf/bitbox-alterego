@@ -101,7 +101,7 @@ int fade()
 
 void do_zero()
 {
-	if (!pause-- || (gamepad_pressed & gamepad_start))
+	if (!pause--)
 		enter_credits();
 }
 
@@ -115,7 +115,7 @@ void enter_credits()
 void do_credits()
 {
 	if (!fade()) { // fading finished ? then pause.
-		if (!pause-- || (gamepad_pressed & gamepad_start))
+		if (!pause--)
 			enter_title();
 	}
 }
@@ -129,7 +129,6 @@ void do_title()
 {
 	if (!fade()) {	// fade in finished ?
 		if (gamepad_pressed & gamepad_start) {
-			lives = 7;
 			enter_play(0);
 		}
 
