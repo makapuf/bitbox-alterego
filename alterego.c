@@ -18,8 +18,11 @@ fade out ? (if zero:ok, sinon darken bits.)
 #include "bitbox.h"
 #include "blitter.h"
 #include "maps.h"
+#include "chiptune.h"
 
 #include <string.h>
+
+extern struct ChipSong alter_chipsong;
 
 // define to immediately start at a level
 // #define START_LEVEL 3
@@ -123,6 +126,7 @@ void do_credits()
 void enter_title() {
 	state = state_title;
 	start_fade(maps_tmap[maps_title]); // start fade
+	chip_play(&alter_chipsong);
 }
 
 void do_title()
@@ -209,6 +213,8 @@ void start_level(int new_level)
 	level = new_level;
 
 	gums=0;
+
+	chip_play(0); // stop song
 
 	// load game screen to vram
 	for (int i=0;i<30;i++)
@@ -347,7 +353,9 @@ void move_player()
 			swaps--;
 			target_swap = horizontal_symmetry ? alterego->x : alterego->y;
 			state=state_swap;
-		} else { // XXX SFX fail
+			chip_note(3,128,1);
+		} else {
+			// XXX SFX fail
 
 		}
 	} else if (GAMEPAD_PRESSED(0,left)) {
@@ -390,12 +398,7 @@ void move_player()
 
 
 	// touching tiles
-	if (test_at(player,0,4,maps_prop_gum))
-	{
-		gums--;
-		set_at(player,0,4,1);
-		// XXX sfx()
-	} else if (test_at(player,0,14,maps_prop_water)) {
+	if (test_at(player,0,14,maps_prop_water)) {
 		die_level();
 	}
 
@@ -501,6 +504,7 @@ void finish_level()
 void die_level(void)
 {
 	lives--;
+	chip_note(3,128,6); // sfx die
 	clear_sprites();
 	// test game over ?
 	if (lives) {
@@ -536,6 +540,7 @@ void do_collide_player()
 					// hide it
 					monsters[i]->y=1024;
 					gums--;
+					chip_note(3,128,7); // gum
 
 					break;
 			}
