@@ -341,7 +341,7 @@ void move_player()
 		// if nothing under : fall
 		player->y++;
 		player_state=maps_st_player_falling;
-	} else if (GAMEPAD_PRESSED(0,A)) {
+	} else if (gamepad_pressed & gamepad_A) {
 		// starts a swap
 		if ( swaps && test_at(alterego,0,4,CAN_WALK ) && test_at(alterego,7,4,CAN_WALK ) ) {
 			swaps--;
