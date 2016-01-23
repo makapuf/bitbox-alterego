@@ -498,6 +498,7 @@ void finish_level()
 	// next level !
 	level+=1;
 	state=state_prestart;
+	chip_note(3,128,5);
 	pause=120;
 }
 
@@ -561,6 +562,7 @@ void do_collide_alter()
 				// hide it
 				monsters[i]->y=1024;
 				gums--;
+				chip_note(3,128,7); // gum
 				break;
 			}
 }
