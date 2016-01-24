@@ -342,10 +342,6 @@ void move_player()
 	if (gamepad_pressed & gamepad_start) {
 		// start a pause
 		state=state_pause;
-	} else if (test_at(player,0,10, maps_prop_empty) && test_at(player,7,10, maps_prop_empty)) {
-		// if nothing under : fall
-		player->y++;
-		player_state=maps_st_player_falling;
 	} else if (gamepad_pressed & gamepad_A) {
 		// starts a swap
 		if ( swaps && test_at(alterego,0,4,CAN_WALK ) && test_at(alterego,7,4,CAN_WALK ) ) {
@@ -354,9 +350,13 @@ void move_player()
 			state=state_swap;
 			chip_note(3,128,1);
 		} else {
-			// XXX SFX fail
+			// XXX SFX cannot swap now
 
 		}
+	} else if (test_at(player,0,10, maps_prop_empty) && test_at(player,7,10, maps_prop_empty)) {
+		// if nothing under : fall
+		player->y++;
+		player_state=maps_st_player_falling;
 	} else if (GAMEPAD_PRESSED(0,left)) {
 		player_state=maps_st_player_left;
 		if (test_at(player,-1,4, CAN_WALK )) {
