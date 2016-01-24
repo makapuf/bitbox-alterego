@@ -8,8 +8,7 @@ phantoms must walk on ladders
 
 succeed game
 
-sfx / music
-Falling ground : icon
+Falling ground : sprite
 
 fade out ? (if zero:ok, sinon darken bits.)
 */
