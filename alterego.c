@@ -433,16 +433,16 @@ void move_skulls()
 				monsters[m]->x++; // go right
 				// test collide right / rightdown empty with tile properties
 				if (
-					test_at(monsters[m],8,15,maps_prop_empty) || // right down empty ?
-					!test_at(monsters[m],8,0, maps_prop_empty) // collide right ?
+					test_at(monsters[m],8,15,maps_prop_empty ) || // right down empty ?
+					!test_at(monsters[m],8,0, maps_prop_empty | maps_prop_ladder) // collide right ?
 					)
 					monsters_state[m]=maps_st_skull_left;
 				break;
 			case maps_st_skull_left :
 				monsters[m]->x--; // go left
 				if (
-					test_at(monsters[m],0,15,maps_prop_empty) || // left down empty ?
-					!test_at(monsters[m],0,0, maps_prop_empty) // collide left ?
+					test_at(monsters[m],0,15,maps_prop_empty ) || // left down empty ?
+					!test_at(monsters[m],0,0, maps_prop_empty | maps_prop_ladder) // collide left ?
 					)
 					monsters_state[m]=maps_st_skull_right;
 				break;
