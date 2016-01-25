@@ -126,13 +126,13 @@ void enter_title() {
 	state = state_title;
 	start_fade(maps_tmap[maps_title]); // start fade
 	chip_play(&alter_chipsong);
-	lives = START_LIVES;
 }
 
 void do_title()
 {
 	if (!fade()) {	// fade in finished ?
 		if (gamepad_pressed & gamepad_start) {
+			lives = START_LIVES;
 			enter_play(0);
 		}
 
@@ -589,6 +589,8 @@ void game_init(void)
 	state=state_zero;
 	pause = 60*3;
 	#else
+	// cheat mode
+	lives = 9;
 	enter_play(START_LEVEL-1);
 	#endif
 }
