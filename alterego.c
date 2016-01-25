@@ -598,6 +598,9 @@ void game_init(void)
 
 void game_frame(void)
 {
+	static int my_frame; // allows skipping frames from vga_frame..
+
+	my_frame++;
 	kbd_emulate_gamepad();
 	gamepad_pressed = gamepad_buttons[0] & ~old_gamepad;
 	old_gamepad = gamepad_buttons[0];
@@ -638,7 +641,8 @@ void game_frame(void)
 			move_player();
 			move_alterego();
 
-			switch(vga_frame%4) {
+
+			switch(my_frame%4) { // should not be skipped.
 				case 0 :
 				case 2 :
 					move_skulls();
