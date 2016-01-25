@@ -126,6 +126,7 @@ void enter_title() {
 	state = state_title;
 	start_fade(maps_tmap[maps_title]); // start fade
 	chip_play(&alter_chipsong);
+	lives = START_LIVES;
 }
 
 void do_title()
@@ -583,8 +584,6 @@ void game_init(void)
 
 	player = sprite_new(maps_sprites[maps_t_player], 0,1024,1); // 0,1024
 	alterego = sprite_new(maps_sprites[maps_t_alter], 0,1024,0); // 0,1024
-
-	lives = START_LIVES;
 
 	#ifndef START_LEVEL
 	state=state_zero;
