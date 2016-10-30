@@ -15,9 +15,9 @@ fade out ? (if zero:ok, sinon darken bits.)
 
 // use 320x240 mode
 #include "bitbox.h"
-#include "blitter.h"
+#include "lib/blitter/blitter.h"
+#include "lib/chiptune/chiptune.h"
 #include "maps.h"
-#include "chiptune.h"
 
 #include <string.h>
 
@@ -601,7 +601,6 @@ void game_frame(void)
 	static int my_frame; // allows skipping frames from vga_frame..
 
 	my_frame++;
-	kbd_emulate_gamepad();
 	gamepad_pressed = gamepad_buttons[0] & ~old_gamepad;
 	old_gamepad = gamepad_buttons[0];
 
