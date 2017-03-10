@@ -1,6 +1,6 @@
 build/
 misc/
-alterego
+alterego_sdl
 maps.h
 maps_data.c
 song.c

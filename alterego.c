@@ -16,7 +16,7 @@ fade out ? (if zero:ok, sinon darken bits.)
 // use 320x240 mode
 #include "bitbox.h"
 #include "lib/blitter/blitter.h"
-#include "lib/chiptune/chiptune.h"
+#include "lib/chiptune/player.h"
 #include "maps.h"
 
 #include <string.h>

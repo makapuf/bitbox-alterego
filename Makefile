@@ -1,7 +1,9 @@
 
 NAME=alterego
 
-GAME_C_FILES = $(NAME).c maps_data.c song.c lib/blitter/blitter.c lib/blitter/blitter_tmap.c lib/blitter/blitter_sprites.c lib/chiptune/chiptune.c
+GAME_C_FILES = $(NAME).c maps_data.c song.c 
+GAME_C_FILES += lib/blitter/blitter.c lib/blitter/blitter_tmap.c lib/blitter/blitter_sprites.c \
+	lib/chiptune/chiptune.c lib/chiptune/player.c lib/chiptune/chiptune.c 
 # this will fail first time
 GAME_BINARY_FILES = $(wildcard *.spr) maps.tset maps.tmap
 
