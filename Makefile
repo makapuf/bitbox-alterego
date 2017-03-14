@@ -17,7 +17,7 @@ $(NAME).c: maps.h
 song.c: alter.song
 	python $(BITBOX)/lib/chiptune/song2C.py $^ > $@
 
-maps.h maps.tset maps.tmap maps_data.c: maps.tmx
+maps.h maps.tset maps.tmap maps_data.c $(SPRITES:%=maps_%.spr): maps.tmx
 	@mkdir -p $(dir $@)
 	python $(BITBOX)/lib/blitter/scripts/tmx.py -maxs $^ > $*.h
 
