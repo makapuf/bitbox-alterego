@@ -11,3 +11,4 @@ song.c
 *.spr
 *.tmap
 *.tset
+icon.c
