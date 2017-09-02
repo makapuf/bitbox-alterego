@@ -1,0 +1,27 @@
+# use distro trusty
+sudo: false
+dist: trusty
+
+language: c 
+
+addons:
+  apt:
+    packages:
+    - gcc-arm-none-eabi 
+    - libnewlib-arm-none-eabi
+    - libnewlib-dev
+    - libsdl1.2-dev
+
+install:
+  - git clone https://github.com/makapuf/bitbox.git 
+  - pip install Pillow
+
+  # check it worked
+  - arm-none-eabi-gcc --version 
+  - gcc --version
+
+script:
+  - "make && make test"
+
+env:
+  - BITBOX=$TRAVIS_BUILD_DIR/bitbox
