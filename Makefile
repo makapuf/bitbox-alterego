@@ -22,7 +22,7 @@ maps.h maps.tset maps.tmap maps_data.c $(SPRITES:%=maps_%.spr): maps.tmx
 	python $(BITBOX)/lib/blitter/scripts/tmx.py -maxs $^ > $*.h
 
 icon.c: icon.png
-	python $(BITBOX)/lib/blitter/scripts/mk_ico.py $^ > $@
+	python $(BITBOX)/2nd_boot/mk_ico.py $^ > $@
 
 clean::
 	rm -rf *.spr *.tmap *.tset maps.h maps_data.c song.c icon.c
