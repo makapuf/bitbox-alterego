@@ -2,22 +2,22 @@
 sudo: false
 dist: trusty
 
-language: c 
+language: c
 
 addons:
   apt:
     packages:
-    - gcc-arm-none-eabi 
+    - gcc-arm-none-eabi
     - libnewlib-arm-none-eabi
     - libnewlib-dev
     - libsdl1.2-dev
 
 install:
-  - git clone https://github.com/makapuf/bitbox.git 
-  - pip install Pillow
+  - git clone https://github.com/makapuf/bitbox.git
+  - pip install --user Pillow
 
   # check it worked
-  - arm-none-eabi-gcc --version 
+  - arm-none-eabi-gcc --version
   - gcc --version
 
 script:
